@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スパイフォール Online</title>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&display=swap');
+
+    :root {
+      --bg-color: #0d0d0d;
+      --panel-bg: #1a1a1a;
+      --card-bg: #242424;
+      --gold-main: #d4af37;
+      --gold-light: #f3e5ab;
+      --gold-dark: #AA771C;
+      --text-color: #f0f0f0;
+      --text-muted: #cccccc;
+      --danger-color: #e63946;
+      --success-color: #2a9d8f;
+      --border-gold: 1px solid rgba(212, 175, 55, 0.4);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      font-size: clamp(18px, 4.5vw, 22px);
+    }
+
+    body {
+      font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', serif;
+      background-color: var(--bg-color);
+      background-image: radial-gradient(circle at 50% 30%, #221d10 0%, #0d0d0d 80%);
+      color: var(--text-color);
+      margin: 0;
+      padding: clamp(10px, 3vw, 24px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .main-container {
+      max-width: 920px;
+      width: 100%;
+      background: var(--panel-bg);
+      border: var(--border-gold);
+      border-radius: 12px;
+      padding: clamp(16px, 4vw, 32px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 15px rgba(212, 175, 55, 0.15);
+    }
+
+    .title-area {
+      text-align: center;
+      margin-bottom: 24px;
+      border-bottom: var(--border-gold);
+      padding-bottom: 16px;
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 6vw, 2.6rem);
+      margin: 0;
+      color: var(--gold-main);
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(212, 175, 55, 0.3);
+      letter-spacing: 0.08em;
+    }
+
+    .subtitle {
+      font-size: clamp(0.9rem, 3vw, 1.15rem);
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: var(--border-gold);
+      border-radius: 8px;
+      padding: clamp(14px, 3.5vw, 24px);
+      margin-bottom: 20px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .card-header {
+      color: var(--gold-light);
+      font-weight: bold;
+      font-size: clamp(1.2rem, 4vw, 1.45rem);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px dashed rgba(212, 175, 55, 0.2);
+      padding-bottom: 8px;
+    }
+
+    label {
+      display: block;
+      font-size: clamp(1.05rem, 3.5vw, 1.25rem);
+      color: var(--gold-light);
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      padding: clamp(12px, 3vw, 16px);
+      border-radius: 8px;
+      border: 1px solid #555;
+      background: #111;
+      color: #fff;
+      font-family: inherit;
+      font-size: clamp(1.05rem, 3.5vw, 1.25rem);
+      margin-bottom: 16px;
+    }
+
+    input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: var(--gold-main);
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+    }
+
+    button {
+      width: 100%;
+      background: linear-gradient(135deg, #d4af37 0%, #aa771c 100%);
+      color: #000;
+      border: none;
+      padding: clamp(14px, 3.5vw, 18px);
+      font-family: inherit;
+      font-weight: bold;
+      font-size: clamp(1.1rem, 3.8vw, 1.3rem);
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 8px 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      transition: all 0.2s ease;
+      word-break: break-word;
+    }
+
+    button:hover {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      background: #444 !important;
+      color: #888 !important;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .player-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: #111;
+      border: 1px solid var(--gold-dark);
+      color: var(--gold-light);
+      margin: 6px;
+      font-size: clamp(1rem, 3.2vw, 1.2rem);
+      font-weight: bold;
+      max-width: 100%;
+      word-break: break-word;
+    }
+
+    .timer-display {
+      text-align: center;
+      font-size: clamp(3rem, 10vw, 4.5rem);
+      color: var(--gold-main);
+      font-weight: bold;
+      text-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+      margin: 10px 0;
+    }
+
+    .info-highlight {
+      color: var(--gold-light);
+      font-weight: bold;
+      font-size: clamp(1.6rem, 5.5vw, 2.2rem);
+      letter-spacing: 2px;
+    }
+
+    .word-highlight {
+      color: var(--danger-color);
+      font-weight: bold;
+      font-size: clamp(1.8rem, 6vw, 2.6rem);
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px rgba(231, 76, 60, 0.4);
+    }
+
+    .action-btn-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .action-btn-group button {
+      background: linear-gradient(135deg, #3a3a3a 0%, #222 100%);
+      color: var(--gold-light);
+      border: 1px solid var(--gold-dark);
+      margin: 0;
+      height: 100%;
+    }
+
+    .vote-progress-container {
+      background: #111;
+      border: 1px solid var(--gold-dark);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .vote-progress-text {
+      font-size: clamp(1.2rem, 4vw, 1.5rem);
+      font-weight: bold;
+      color: var(--gold-light);
+      margin-bottom: 8px;
+    }
+
+    .vote-status-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .status-badge {
+      font-size: clamp(0.9rem, 3vw, 1.1rem);
+      padding: 6px 14px;
+      border-radius: 16px;
+      background: #222;
+      border: 1px solid #555;
+      color: var(--text-muted);
+    }
+
+    .status-badge.done {
+      border-color: var(--success-color);
+      color: var(--gold-light);
+      background: rgba(42, 157, 143, 0.2);
+      font-weight: bold;
+    }
+
+    .location-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .location-chip {
+      background: #111;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: clamp(0.95rem, 3.2vw, 1.15rem);
+      min-width: 480px;
+    }
+
+    .result-table th, .result-table td {
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      padding: clamp(8px, 2vw, 14px);
+      text-align: center;
+      word-break: break-word;
+    }
+
+    .result-table th {
+      background: #111;
+      color: var(--gold-light);
+      font-size: clamp(1rem, 3.5vw, 1.2rem);
+      white-space: nowrap;
+    }
+
+    .result-table td.player-name-cell {
+      max-width: 180px;
+      word-break: break-word;
+    }
+
+    .result-table tr:nth-child(even) {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .correct-vote {
+      color: var(--gold-main);
+      font-weight: bold;
+      text-shadow: 0 0 6px rgba(212, 175, 55, 0.5);
+    }
+
+    .log-container {
+      background: #0a0a0a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 10px;
+      height: 90px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* ルールアコーディオン用スタイル */
+    details.rule-box {
+      background: #111;
+      border: 1px solid var(--gold-dark);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      color: var(--text-color);
+    }
+
+    details.rule-box summary {
+      font-weight: bold;
+      color: var(--gold-light);
+      cursor: pointer;
+      font-size: 1.1rem;
+      outline: none;
+    }
+
+    details.rule-box summary:hover {
+      color: var(--gold-main);
+    }
+
+    .rule-content {
+      margin-top: 12px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      border-top: 1px dashed rgba(212, 175, 55, 0.2);
+      padding-top: 10px;
+    }
+
+    .rule-content h4 {
+      color: var(--gold-main);
+      margin: 10px 0 4px 0;
+    }
+
+    .rule-content ul {
+      margin: 4px 0;
+      padding-left: 20px;
+    }
+
+    @media (max-width: 580px) {
+      .lobby-btn-group {
+        flex-direction: column !important;
+      }
+      .action-btn-group {
+        grid-template-columns: 1fr;
+      }
+      .result-table {
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="main-container">
+  <div class="title-area">
+    <h1>🕵️ スパイフォール</h1>
+    <div class="subtitle">— ONLINE SECRET DEDUCTION GAME —</div>
+  </div>
+
+  <div id="screen-lobby">
+    <div class="card">
+      <div class="card-header">👤 プレイヤー情報の入力</div>
+      <label>あなたのプレイヤー名</label>
+      <input type="text" id="input-name" placeholder="例: エージェント">
+      
+      <label>合言葉（部屋名）</label>
+      <input type="text" id="input-room-code" placeholder="例: spy123">
+
+      <div class="lobby-btn-group" style="display: flex; gap: 8px; margin-top: 8px;">
+        <button id="btn-create" onclick="joinAsHost()">部屋を作る (ホスト)</button>
+        <button id="btn-join" onclick="joinAsGuest()" style="background: linear-gradient(135deg, #555 0%, #333 100%); color:#fff;">部屋に入る (ゲスト)</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-room" style="display:none;">
+    <div class="card">
+      <div class="card-header">🏰 参加待機ルーム (<span id="room-name-display">---</span>)</div>
+      <div style="margin-bottom: 10px; font-weight: bold;">現在の参加者:</div>
+      <div id="player-list" style="display: flex; flex-wrap: wrap; gap: 4px;"></div>
+    </div>
+
+    <details class="rule-box">
+      <summary>📖 ゲームルール・遊び方を見る</summary>
+      <div class="rule-content">
+        <h4>概要</h4>
+        <p>1人だけ紛れ込んだ「場所を知らないスパイ」を会話から探し出す、またはスパイとなって周囲を欺き「場所」を当てるゲームです。</p>
+
+        <h4>勝利条件</h4>
+        <ul>
+          <li><strong>一般人陣営</strong>: 制限時間内に会話からスパイを見つけ出し、投票で追放する。</li>
+          <li><strong>スパイ陣営</strong>: 正体がバレずに逃げ切る、または会話から「現在の場所」を当てる。</li>
+        </ul>
+
+        <h4>ゲームの流れ</h4>
+        <ol>
+          <li><strong>役割確認</strong>: 一般人には「現在の場所」が提示され、スパイには「スパイ」とだけ表示されます。</li>
+          <li><strong>会話・質問</strong>: 順番に「場所」に関する質問をし合います。一般人はスパイに場所を悟られない絶妙な質問・回答を心がけ、スパイは知っているフリをして場所を推測します。</li>
+          <li><strong>スパイの逆転宣言</strong>: スパイは場所が分かったら、会話の途中でも「正体を明かして場所を宣言」できます。（正解で即勝利、不正解で敗北）</li>
+          <li><strong>投票</strong>: 時間終了または打ち切りで、全員でスパイだと思う人に投票します。</li>
+        </ol>
+      </div>
+    </details>
+
+    <div id="host-panel" style="display:none;" class="card">
+      <div class="card-header">👑 ホスト設定</div>
+      <label>質問・会話フェイズの時間制限</label>
+      <select id="select-game-time">
+        <option value="300">5分</option>
+        <option value="480" selected>8分</option>
+        <option value="600">10分</option>
+      </select>
+      
+      <button id="btn-start" onclick="startGame()">ゲームを開始する (3人〜8人対応)</button>
+    </div>
+  </div>
+
+  <div id="screen-confirm" style="display:none;">
+    <div class="card" style="text-align: center;">
+      <div class="card-header" style="justify-content: center;">📜 あなたの正体</div>
+      <div id="info-role" class="info-highlight" style="margin: 12px 0;">-</div>
+      <div id="info-location-box" style="display:none; margin-top: 15px;">
+        <div style="font-size: 1.1rem; color: var(--text-muted); font-weight: bold;">現在のロケーション</div>
+        <div id="info-location" class="word-highlight">-</div>
+      </div>
+    </div>
+
+    <div id="host-start-question-panel" style="display:none;">
+      <button onclick="startQuestionPhase()">全員の確認完了・質問タイム開始</button>
+    </div>
+    <div id="guest-waiting-panel" style="display:none; text-align:center; color:var(--text-muted); font-size:1.1rem; padding: 10px;">
+      ホストが質問タイムを開始するのを待っています...
+    </div>
+  </div>
+
+  <div id="screen-question" style="display:none;">
+    <div class="timer-display" id="question-timer">08:00</div>
+    <div style="text-align:center; color:var(--text-muted); font-size:1.1rem; margin-bottom:12px;">❓ 会話フェイズ（順番に質問を回してください）</div>
+
+    <div class="card">
+      <div class="card-header" style="color:var(--gold-main);">🕵️ ロケーション候補（スパイは会話からここを推理）</div>
+      <div id="play-location-grid" class="location-grid"></div>
+    </div>
+
+    <div class="card" id="spy-action-card" style="display:none; border-color: var(--danger-color);">
+      <div class="card-header" style="color:var(--danger-color);">⚠️ スパイ専用アクション</div>
+      <p style="font-size:0.95rem; color:var(--text-muted); margin-top:0;">場所が分かった場合、いつでも告発して一発逆転を狙えます。</p>
+      <button onclick="showSpyGuessModal()" style="background: linear-gradient(135deg, #e63946 0%, #b71c1c 100%); color:#fff;">
+        🎯 自分の正体を明かして場所を当てる
+      </button>
+    </div>
+
+    <button onclick="requestStartVote()" style="background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%); color: #fff; margin-top: 14px;">
+      🗳️ 議論を打ち切ってスパイ告発投票へ
+    </button>
+  </div>
+
+  <div id="modal-spy-guess" style="display:none;" class="card">
+    <div class="card-header" style="color:var(--danger-color);">🎯 場所を推測して宣言</div>
+    <label>現在の場所はどこですか？</label>
+    <select id="select-spy-location"></select>
+    <button onclick="submitSpyGuess()">この場所で確定する</button>
+    <button onclick="hideSpyGuessModal()" style="background:#444; color:#fff;">キャンセル</button>
+  </div>
+
+  <div id="screen-vote" style="display:none;">
+    <div style="text-align:center; color:var(--gold-main); font-size:1.6rem; font-weight:bold; margin-bottom:12px;">🔍 スパイ告発投票</div>
+
+    <div class="vote-progress-container">
+      <div class="vote-progress-text">🗳️ 投票状況: <span id="vote-count-display">0 / 0</span> 人完了</div>
+      <div id="vote-status-list" class="vote-status-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" style="color:var(--danger-color);">🗳️ スパイだと思うプレイヤーを1人選択</div>
+      <p style="font-size:1.05rem; color:var(--text-muted); margin-top:0;">「場所を知らなさそうだった人」「回答が不自然だった人」に投票してください。</p>
+      <div id="vote-buttons" class="action-btn-group"></div>
+    </div>
+  </div>
+
+  <div id="screen-result" style="display:none;">
+    <div class="card" style="text-align: center;">
+      <h2 id="result-winner-title" style="margin: 0; color: var(--gold-main); font-size: clamp(1.6rem, 5vw, 2.2rem);"></h2>
+      <p id="result-winner-sub" style="margin-top: 8px; font-size: 1.15rem; color: var(--text-muted);"></p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">📋 全員の答え合わせ</div>
+      <div style="margin-bottom: 12px; font-size:1.15rem;">今回の正解ロケーション: <span id="result-secret-location" class="word-highlight" style="font-size:clamp(1.8rem, 5vw, 2.4rem);">-</span></div>
+      <div class="table-wrapper">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th style="width: 30%;">名前</th>
+              <th style="width: 30%;">陣営・役割</th>
+              <th style="width: 40%;">投票先</th>
+            </tr>
+          </thead>
+          <tbody id="result-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="host-replay-panel" style="display:none;">
+      <button onclick="requestReplay()">🔄 もう一度遊ぶ（待機ルームへ戻る）</button>
+    </div>
+    <div id="guest-replay-panel" style="display:none; text-align:center; color:var(--text-muted); font-size:1.1rem; padding: 10px;">
+      ホストが「もう一度遊ぶ」を押すと待機画面に戻ります...
+    </div>
+  </div>
+
+  <div style="margin-top: 10px;">
+    <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:4px;">LOG</div>
+    <div class="log-container" id="log-box"></div>
+  </div>
+</div>
+
+<script>
+  const LOCATION_LIST = [
+    "海賊船", "病院", "宇宙ステーション", "潜水艦", "映画館", "飛行機", 
+    "警察署", "レストラン", "学校", "遊園地", "銀行", "温泉旅館",
+    "サーカス", "カジノ", "軍事基地", "スーパーマーケット", "美術館", "旅客船",
+    "大使館", "劇場", "極地探検隊", "地下鉄", "ゴルフ場", "墓地"
+  ];
+
+  const PREFIX = "spyfall-game-v1-";
+
+  let peer = null, myId = "", myName = "", roomCode = "";
+  let isHost = false;
+  let connections = {}; 
+  let hostConn = null; 
+
+  let players = []; 
+  let myRole = "", currentLocation = "";
+  let questionTimerInterval = null;
+  let gameDuration = 480;
+  let votes = {};
+
+  function log(msg) {
+    const box = document.getElementById("log-box");
+    box.innerHTML += `<div>> ${msg}</div>`;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function joinAsHost() {
+    myName = document.getElementById("input-name").value.trim() || "ホスト";
+    roomCode = document.getElementById("input-room-code").value.trim().toLowerCase();
+    if (!roomCode) return alert("合言葉（部屋名）を入力してください");
+
+    isHost = true;
+    const peerId = `${PREFIX}${roomCode}-host`;
+    peer = new Peer(peerId);
+
+    peer.on('open', (id) => {
+      myId = id;
+      disableAuthButtons();
+      setupLobbyUI();
+      players.push({ id: myId, name: myName });
+      renderPlayers();
+      log(`部屋を作成しました (部屋名: ${roomCode})`);
+    });
+
+    peer.on('error', (err) => {
+      enableAuthButtons();
+      if (err.type === 'unavailable-id') alert("その部屋名は使われています。別の部屋名を入力してください。");
+      else alert("エラーが発生しました: " + err.type);
+    });
+
+    peer.on('connection', (conn) => {
+      conn.on('open', () => {
+        conn.on('data', (data) => handleHostData(conn, data));
+      });
+      conn.on('close', () => {
+        players = players.filter(p => p.id !== conn.peer);
+        delete connections[conn.peer];
+        broadcast({ type: 'PLAYER_LIST', players });
+        renderPlayers();
+      });
+    });
+  }
+
+  function joinAsGuest() {
+    myName = document.getElementById("input-name").value.trim() || "ゲスト";
+    roomCode = document.getElementById("input-room-code").value.trim().toLowerCase();
+    if (!roomCode) return alert("合言葉（部屋名）を入力してください");
+
+    isHost = false;
+    disableAuthButtons();
+    const hostPeerId = `${PREFIX}${roomCode}-host`;
+    peer = new Peer();
+
+    peer.on('open', (id) => {
+      myId = id;
+      hostConn = peer.connect(hostPeerId);
+
+      hostConn.on('open', () => {
+        setupLobbyUI();
+        hostConn.send({ type: 'JOIN', name: myName });
+        log(`部屋 [${roomCode}] に接続しました`);
+      });
+
+      hostConn.on('data', (data) => handleClientData(data));
+    });
+
+    peer.on('error', () => {
+      enableAuthButtons();
+      alert("ホストに接続できませんでした。部屋名を確認してください。");
+    });
+  }
+
+  function disableAuthButtons() {
+    document.getElementById("btn-create").disabled = true;
+    document.getElementById("btn-join").disabled = true;
+  }
+
+  function enableAuthButtons() {
+    document.getElementById("btn-create").disabled = false;
+    document.getElementById("btn-join").disabled = false;
+  }
+
+  function setupLobbyUI() {
+    document.getElementById("screen-lobby").style.display = "none";
+    document.getElementById("screen-room").style.display = "block";
+    document.getElementById("screen-result").style.display = "none";
+    document.getElementById("room-name-display").innerText = roomCode;
+    if (isHost) document.getElementById("host-panel").style.display = "block";
+  }
+
+  function renderPlayers() {
+    const el = document.getElementById("player-list");
+    el.innerHTML = players.map(p => `<span class="player-badge">👤 ${p.name}</span>`).join("");
+    if (isHost) {
+      document.getElementById("btn-start").disabled = players.length < 3;
+    }
+  }
+
+  function broadcast(data) {
+    Object.values(connections).forEach(c => c.send(data));
+    handleClientData(data);
+  }
+
+  function handleHostData(conn, data) {
+    if (data.type === 'JOIN') {
+      connections[conn.peer] = conn;
+      players.push({ id: conn.peer, name: data.name });
+      broadcast({ type: 'PLAYER_LIST', players });
+      renderPlayers();
+    } else if (data.type === 'VOTE') {
+      handleVote(conn.peer, data.targetId);
+    } else if (data.type === 'REQUEST_VOTE') {
+      triggerVotePhase();
+    } else if (data.type === 'SPY_GUESS') {
+      handleSpyGuess(conn.peer, data.guessedLocation);
+    }
+  }
+
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function startGame() {
+    if (players.length < 3) return;
+    votes = {};
+
+    gameDuration = parseInt(document.getElementById("select-game-time").value, 10);
+    currentLocation = LOCATION_LIST[Math.floor(Math.random() * LOCATION_LIST.length)];
+
+    let shuffled = shuffle([...players]);
+    const spyId = shuffled[0].id;
+
+    players.forEach(p => {
+      const isSpy = (p.id === spyId);
+      const role = isSpy ? "スパイ" : "一般人";
+      p.role = role;
+
+      const payload = {
+        type: 'GAME_START',
+        role: role,
+        location: isSpy ? null : currentLocation,
+        gameTime: gameDuration
+      };
+
+      if (p.id === myId) handleClientData(payload);
+      else connections[p.id].send(payload);
+    });
+  }
+
+  function startQuestionPhase() {
+    broadcast({ type: 'START_QUESTION' });
+
+    let remaining = gameDuration;
+    broadcast({ type: 'QUESTION_TIMER_SYNC', time: remaining });
+
+    clearInterval(questionTimerInterval);
+    questionTimerInterval = setInterval(() => {
+      remaining--;
+      broadcast({ type: 'QUESTION_TIMER_SYNC', time: remaining });
+      if (remaining <= 0) {
+        clearInterval(questionTimerInterval);
+        triggerVotePhase();
+      }
+    }, 1000);
+  }
+
+  function triggerVotePhase() {
+    clearInterval(questionTimerInterval);
+    broadcast({ type: 'START_VOTE' });
+  }
+
+  function requestStartVote() {
+    if (isHost) triggerVotePhase();
+    else hostConn.send({ type: 'REQUEST_VOTE' });
+  }
+
+  function formatTime(seconds) {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function handleClientData(data) {
+    if (data.type === 'PLAYER_LIST') {
+      players = data.players;
+      renderPlayers();
+    } else if (data.type === 'GAME_START') {
+      setupConfirmScreen(data);
+    } else if (data.type === 'START_QUESTION') {
+      document.getElementById("screen-confirm").style.display = "none";
+      document.getElementById("screen-question").style.display = "block";
+      renderLocationGrid();
+    } else if (data.type === 'QUESTION_TIMER_SYNC') {
+      document.getElementById("question-timer").innerText = formatTime(data.time);
+    } else if (data.type === 'START_VOTE') {
+      startVoteScreen();
+    } else if (data.type === 'VOTE_PROGRESS') {
+      updateVoteProgressUI(data.votedCount, data.totalCount, data.votedPlayerIds);
+    } else if (data.type === 'SHOW_RESULT') {
+      showResultScreen(data);
+    } else if (data.type === 'RETURN_TO_ROOM') {
+      returnToRoom();
+    }
+  }
+
+  function setupConfirmScreen(data) {
+    myRole = data.role;
+    currentLocation = data.location;
+
+    document.getElementById("screen-room").style.display = "none";
+    document.getElementById("screen-confirm").style.display = "block";
+    document.getElementById("screen-question").style.display = "none";
+    document.getElementById("screen-vote").style.display = "none";
+    document.getElementById("screen-result").style.display = "none";
+
+    document.getElementById("info-role").innerText = myRole === "スパイ" ? "🕵️ スパイ" : "👥 一般人";
+
+    const locBox = document.getElementById("info-location-box");
+    if (myRole === "スパイ") {
+      locBox.style.display = "none";
+      document.getElementById("spy-action-card").style.display = "block";
+    } else {
+      locBox.style.display = "block";
+      document.getElementById("info-location").innerText = currentLocation;
+      document.getElementById("spy-action-card").style.display = "none";
+    }
+
+    if (isHost) {
+      document.getElementById("host-start-question-panel").style.display = "block";
+      document.getElementById("guest-waiting-panel").style.display = "none";
+    } else {
+      document.getElementById("host-start-question-panel").style.display = "none";
+      document.getElementById("guest-waiting-panel").style.display = "block";
+    }
+  }
+
+  function renderLocationGrid() {
+    const grid = document.getElementById("play-location-grid");
+    grid.innerHTML = LOCATION_LIST.map(loc => `<div class="location-chip">${loc}</div>`).join("");
+  }
+
+  function showSpyGuessModal() {
+    const sel = document.getElementById("select-spy-location");
+    sel.innerHTML = LOCATION_LIST.map(loc => `<option value="${loc}">${loc}</option>`).join("");
+    document.getElementById("modal-spy-guess").style.display = "block";
+  }
+
+  function hideSpyGuessModal() {
+    document.getElementById("modal-spy-guess").style.display = "none";
+  }
+
+  function submitSpyGuess() {
+    const guessed = document.getElementById("select-spy-location").value;
+    hideSpyGuessModal();
+    if (isHost) handleSpyGuess(myId, guessed);
+    else hostConn.send({ type: 'SPY_GUESS', guessedLocation: guessed });
+  }
+
+  function handleSpyGuess(spyPlayerId, guessedLocation) {
+    clearInterval(questionTimerInterval);
+    const spy = players.find(p => p.id === spyPlayerId);
+    const isSuccess = (guessedLocation === currentLocation);
+
+    const finalPlayersResult = players.map(p => ({
+      ...p,
+      votedToName: p.id === spyPlayerId ? `場所宣言: 「${guessedLocation}」` : "-"
+    }));
+
+    broadcast({
+      type: 'SHOW_RESULT',
+      isSpyGuessMode: true,
+      isSuccess: isSuccess,
+      spyId: spy.id,
+      spyName: spy.name,
+      guessedLocation: guessedLocation,
+      secretLocation: currentLocation,
+      allPlayersResult: finalPlayersResult
+    });
+  }
+
+  function startVoteScreen() {
+    document.getElementById("screen-question").style.display = "none";
+    document.getElementById("screen-vote").style.display = "block";
+
+    updateVoteProgressUI(0, players.length, []);
+
+    const voteBox = document.getElementById("vote-buttons");
+    voteBox.innerHTML = "";
+    players.forEach(p => {
+      if (p.id !== myId) {
+        const btn = document.createElement("button");
+        btn.innerText = `🗳️ 「${p.name}」 に投票`;
+        btn.onclick = () => castVote(p.id);
+        voteBox.appendChild(btn);
+      }
+    });
+  }
+
+  function castVote(targetId) {
+    document.getElementById("vote-buttons").innerHTML = "<p style='color:var(--gold-light); font-size:1.2rem; text-align:center;'>投票完了。全員の投票を待っています...</p>";
+    if (isHost) handleVote(myId, targetId);
+    else hostConn.send({ type: 'VOTE', targetId });
+  }
+
+  function handleVote(fromId, targetId) {
+    votes[fromId] = targetId;
+    const votedCount = Object.keys(votes).length;
+    const totalCount = players.length;
+    const votedPlayerIds = Object.keys(votes);
+
+    broadcast({
+      type: 'VOTE_PROGRESS',
+      votedCount: votedCount,
+      totalCount: totalCount,
+      votedPlayerIds: votedPlayerIds
+    });
+
+    if (votedCount === totalCount) {
+      const counts = {};
+      Object.values(votes).forEach(t => counts[t] = (counts[t] || 0) + 1);
+
+      let maxCnt = 0;
+      Object.values(counts).forEach(cnt => {
+        if (cnt > maxCnt) maxCnt = cnt;
+      });
+
+      const topVotedIds = Object.keys(counts).filter(id => counts[id] === maxCnt);
+      const spy = players.find(p => p.role === 'スパイ');
+
+      const isSuccess = topVotedIds.length === 1 && topVotedIds[0] === spy.id;
+
+      const finalPlayersResult = players.map(p => {
+        const votedTargetId = votes[p.id];
+        const votedTarget = players.find(x => x.id === votedTargetId);
+        return {
+          ...p,
+          votedToId: votedTargetId,
+          votedToName: votedTarget ? votedTarget.name : "未投票"
+        };
+      });
+
+      broadcast({
+        type: 'SHOW_RESULT',
+        isSpyGuessMode: false,
+        isSuccess: isSuccess,
+        spyId: spy.id,
+        spyName: spy.name,
+        secretLocation: currentLocation,
+        allPlayersResult: finalPlayersResult
+      });
+    }
+  }
+
+  function updateVoteProgressUI(votedCount, totalCount, votedPlayerIds) {
+    document.getElementById("vote-count-display").innerText = `${votedCount} / ${totalCount}`;
+
+    const listEl = document.getElementById("vote-status-list");
+    listEl.innerHTML = players.map(p => {
+      const hasVoted = votedPlayerIds.includes(p.id);
+      const statusText = hasVoted ? "✓ 投票済み" : "投票中...";
+      const badgeClass = hasVoted ? "status-badge done" : "status-badge";
+      return `<span class="${badgeClass}">${p.name}: ${statusText}</span>`;
+    }).join("");
+  }
+
+  function showResultScreen(data) {
+    document.getElementById("screen-vote").style.display = "none";
+    document.getElementById("screen-question").style.display = "none";
+    document.getElementById("screen-result").style.display = "block";
+
+    const titleEl = document.getElementById("result-winner-title");
+    const subEl = document.getElementById("result-winner-sub");
+    document.getElementById("result-secret-location").innerText = data.secretLocation;
+
+    if (data.isSpyGuessMode) {
+      if (data.isSuccess) {
+        titleEl.innerText = "🕵️ スパイの大逆転勝利！";
+        titleEl.style.color = "var(--danger-color)";
+        subEl.innerText = `スパイ（「${data.spyName}」）が見事に場所「${data.guessedLocation}」を言い当てました！`;
+      } else {
+        titleEl.innerText = "🎉 一般人陣営の勝利！";
+        titleEl.style.color = "var(--success-color)";
+        subEl.innerText = `スパイ（「${data.spyName}」）は場所「${data.guessedLocation}」を誤答しました。`;
+      }
+    } else {
+      if (data.isSuccess) {
+        titleEl.innerText = "🎉 一般人陣営の勝利！";
+        titleEl.style.color = "var(--success-color)";
+        subEl.innerText = `見事にスパイ（「${data.spyName}」）を特定して追放しました！`;
+      } else {
+        titleEl.innerText = "🕵️ スパイの潜伏勝利！";
+        titleEl.style.color = "var(--danger-color)";
+        subEl.innerText = `スパイ（「${data.spyName}」）の特定に失敗しました。`;
+      }
+    }
+
+    const tbody = document.getElementById("result-table-body");
+    tbody.innerHTML = data.allPlayersResult.map(p => {
+      let roleColor = 'var(--text-color)';
+      if (p.role === 'スパイ') roleColor = 'var(--danger-color)';
+      if (p.role === '一般人') roleColor = 'var(--gold-main)';
+
+      const isCorrectVote = (p.votedToId === data.spyId);
+      const voteCellClass = isCorrectVote ? 'correct-vote' : '';
+
+      return `
+        <tr>
+          <td class="player-name-cell"><strong>「${p.name}」</strong></td>
+          <td style="color:${roleColor}; font-weight:bold;">${p.role}</td>
+          <td class="player-name-cell ${voteCellClass}">👉 ${p.votedToName}</td>
+        </tr>
+      `;
+    }).join("");
+
+    if (isHost) {
+      document.getElementById("host-replay-panel").style.display = "block";
+      document.getElementById("guest-replay-panel").style.display = "none";
+    } else {
+      document.getElementById("host-replay-panel").style.display = "none";
+      document.getElementById("guest-replay-panel").style.display = "block";
+    }
+  }
+
+  function requestReplay() {
+    if (isHost) {
+      broadcast({ type: 'RETURN_TO_ROOM' });
+    }
+  }
+
+  function returnToRoom() {
+    document.getElementById("screen-result").style.display = "none";
+    document.getElementById("screen-room").style.display = "block";
+  }
+</script>
+
+</body>
+</html>
