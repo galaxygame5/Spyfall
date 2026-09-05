@@ -422,6 +422,16 @@
 
     <div id="host-panel" style="display:none;" class="card">
       <div class="card-header">👑 ホスト設定</div>
+      
+      <label>正体・場所の確認タイム</label>
+      <select id="select-confirm-time">
+        <option value="10">10秒</option>
+        <option value="15" selected>15秒</option>
+        <option value="20">20秒</option>
+        <option value="25">25秒</option>
+        <option value="30">30秒</option>
+      </select>
+
       <label>質問・会話フェイズの時間制限</label>
       <select id="select-game-time">
         <option value="300">5分</option>
@@ -434,6 +444,9 @@
   </div>
 
   <div id="screen-confirm" style="display:none;">
+    <div class="timer-display" id="confirm-timer" style="font-size: clamp(2.5rem, 8vw, 3.5rem); margin-bottom: 0;">15</div>
+    <div style="text-align:center; color:var(--text-muted); font-size:0.95rem; margin-bottom:15px;">⏳ 開始まで役割を確認してください</div>
+
     <div class="card" style="text-align: center;">
       <div class="card-header" style="justify-content: center;">📜 あなたの正体</div>
       <div id="info-role" class="info-highlight" style="margin: 12px 0;">-</div>
@@ -441,13 +454,6 @@
         <div style="font-size: 1.1rem; color: var(--text-muted); font-weight: bold;">現在のロケーション</div>
         <div id="info-location" class="word-highlight">-</div>
       </div>
-    </div>
-
-    <div id="host-start-question-panel" style="display:none;">
-      <button onclick="startQuestionPhase()">全員の確認完了・質問タイム開始</button>
-    </div>
-    <div id="guest-waiting-panel" style="display:none; text-align:center; color:var(--text-muted); font-size:1.1rem; padding: 10px;">
-      ホストが質問タイムを開始するのを待っています...
     </div>
   </div>
 
@@ -550,7 +556,9 @@
 
   let players = []; 
   let myRole = "", currentLocation = "";
+  let confirmTimerInterval = null;
   let questionTimerInterval = null;
+  let confirmDuration = 15;
   let gameDuration = 480;
   let votes = {};
 
@@ -684,6 +692,7 @@
     if (players.length < 3) return;
     votes = {};
 
+    confirmDuration = parseInt(document.getElementById("select-confirm-time").value, 10);
     gameDuration = parseInt(document.getElementById("select-game-time").value, 10);
     const selectedLocation = LOCATION_LIST[Math.floor(Math.random() * LOCATION_LIST.length)];
     currentLocation = selectedLocation;
@@ -700,6 +709,7 @@
         type: 'GAME_START',
         role: role,
         location: isSpy ? null : selectedLocation,
+        confirmTime: confirmDuration,
         gameTime: gameDuration
       };
 
@@ -709,6 +719,23 @@
         connections[p.id].send(payload);
       }
     });
+
+    startConfirmTimer();
+  }
+
+  function startConfirmTimer() {
+    let remaining = confirmDuration;
+    broadcast({ type: 'CONFIRM_TIMER_SYNC', time: remaining });
+
+    clearInterval(confirmTimerInterval);
+    confirmTimerInterval = setInterval(() => {
+      remaining--;
+      broadcast({ type: 'CONFIRM_TIMER_SYNC', time: remaining });
+      if (remaining <= 0) {
+        clearInterval(confirmTimerInterval);
+        startQuestionPhase();
+      }
+    }, 1000);
   }
 
   function startQuestionPhase() {
@@ -750,6 +777,8 @@
       renderPlayers();
     } else if (data.type === 'GAME_START') {
       setupConfirmScreen(data);
+    } else if (data.type === 'CONFIRM_TIMER_SYNC') {
+      document.getElementById("confirm-timer").innerText = data.time;
     } else if (data.type === 'START_QUESTION') {
       document.getElementById("screen-confirm").style.display = "none";
       document.getElementById("screen-question").style.display = "block";
@@ -777,6 +806,8 @@
     document.getElementById("screen-vote").style.display = "none";
     document.getElementById("screen-result").style.display = "none";
 
+    document.getElementById("confirm-timer").innerText = data.confirmTime;
+
     const isSpy = (myRole === "スパイ");
     document.getElementById("info-role").innerText = isSpy ? "🕵️ スパイ" : "👥 一般人";
 
@@ -789,14 +820,6 @@
       locationTextEl.innerText = currentLocation;
       locationTextEl.style.color = "var(--gold-main)";
       document.getElementById("spy-action-card").style.display = "none";
-    }
-
-    if (isHost) {
-      document.getElementById("host-start-question-panel").style.display = "block";
-      document.getElementById("guest-waiting-panel").style.display = "none";
-    } else {
-      document.getElementById("host-start-question-panel").style.display = "none";
-      document.getElementById("guest-waiting-panel").style.display = "block";
     }
   }
 
