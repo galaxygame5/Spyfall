@@ -540,11 +540,17 @@
 </div>
 
 <script>
-  const LOCATION_LIST = [
+  // 50種類の全ロケーションマスターリスト
+  const MASTER_LOCATION_LIST = [
     "海賊船", "病院", "宇宙ステーション", "潜水艦", "映画館", "飛行機", 
     "警察署", "レストラン", "学校", "遊園地", "銀行", "温泉旅館",
     "サーカス", "カジノ", "軍事基地", "スーパーマーケット", "美術館", "旅客船",
-    "大使館", "劇場", "極地探検隊", "地下鉄", "ゴルフ場", "墓地"
+    "大使館", "劇場", "極地探検隊", "地下鉄", "ゴルフ場", "墓地",
+    "水族館", "動物園", "新幹線", "キャンプ場", "ナイトクラブ", "結婚式場",
+    "消防署", "スキー場", "図書館", "神社・寺院", "無人島", "テレビ局",
+    "ヘリコプター", "高級ホテル", "サウナ", "ガソリンスタンド", "ラーメン屋",
+    "ボウリング場", "美容室", "競馬場", "宇宙船 launch pad", "音楽フェス",
+    "工事現場", "裁判所", "野球場", "デパート"
   ];
 
   const PREFIX = "spyfall-game-v1-";
@@ -556,6 +562,7 @@
 
   let players = []; 
   let myRole = "", currentLocation = "";
+  let currentRoundLocations = []; // 今回のゲームで使われる24候補
   let confirmTimerInterval = null;
   let questionTimerInterval = null;
   let confirmDuration = 15;
@@ -694,11 +701,17 @@
 
     confirmDuration = parseInt(document.getElementById("select-confirm-time").value, 10);
     gameDuration = parseInt(document.getElementById("select-game-time").value, 10);
-    const selectedLocation = LOCATION_LIST[Math.floor(Math.random() * LOCATION_LIST.length)];
+
+    // 50種類からランダムに24種類を抽出
+    let shuffledMaster = shuffle([...MASTER_LOCATION_LIST]);
+    currentRoundLocations = shuffledMaster.slice(0, 24);
+
+    // 選ばれた24種類の中から正解の場所を1つ決定
+    const selectedLocation = currentRoundLocations[Math.floor(Math.random() * currentRoundLocations.length)];
     currentLocation = selectedLocation;
 
-    let shuffled = shuffle([...players]);
-    const spyId = shuffled[0].id;
+    let shuffledPlayers = shuffle([...players]);
+    const spyId = shuffledPlayers[0].id;
 
     players.forEach(p => {
       const isSpy = (p.id === spyId);
@@ -709,6 +722,7 @@
         type: 'GAME_START',
         role: role,
         location: isSpy ? null : selectedLocation,
+        roundLocations: currentRoundLocations,
         confirmTime: confirmDuration,
         gameTime: gameDuration
       };
@@ -799,6 +813,7 @@
   function setupConfirmScreen(data) {
     myRole = data.role;
     currentLocation = data.location;
+    currentRoundLocations = data.roundLocations;
 
     document.getElementById("screen-room").style.display = "none";
     document.getElementById("screen-confirm").style.display = "block";
@@ -825,12 +840,12 @@
 
   function renderLocationGrid() {
     const grid = document.getElementById("play-location-grid");
-    grid.innerHTML = LOCATION_LIST.map(loc => `<div class="location-chip">${loc}</div>`).join("");
+    grid.innerHTML = currentRoundLocations.map(loc => `<div class="location-chip">${loc}</div>`).join("");
   }
 
   function showSpyGuessModal() {
     const sel = document.getElementById("select-spy-location");
-    sel.innerHTML = LOCATION_LIST.map(loc => `<option value="${loc}">${loc}</option>`).join("");
+    sel.innerHTML = currentRoundLocations.map(loc => `<option value="${loc}">${loc}</option>`).join("");
     document.getElementById("modal-spy-guess").style.display = "block";
   }
 
