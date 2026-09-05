@@ -182,11 +182,11 @@
     }
 
     .word-highlight {
-      color: var(--danger-color);
+      color: var(--gold-main);
       font-weight: bold;
       font-size: clamp(1.8rem, 6vw, 2.6rem);
       letter-spacing: 3px;
-      text-shadow: 0 0 10px rgba(231, 76, 60, 0.4);
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
     }
 
     .action-btn-group {
@@ -315,7 +315,6 @@
       color: var(--text-muted);
     }
 
-    /* ルールアコーディオン用スタイル */
     details.rule-box {
       background: #111;
       border: 1px solid var(--gold-dark);
@@ -438,7 +437,7 @@
     <div class="card" style="text-align: center;">
       <div class="card-header" style="justify-content: center;">📜 あなたの正体</div>
       <div id="info-role" class="info-highlight" style="margin: 12px 0;">-</div>
-      <div id="info-location-box" style="display:none; margin-top: 15px;">
+      <div id="info-location-box" style="margin-top: 15px;">
         <div style="font-size: 1.1rem; color: var(--text-muted); font-weight: bold;">現在のロケーション</div>
         <div id="info-location" class="word-highlight">-</div>
       </div>
@@ -774,15 +773,17 @@
     document.getElementById("screen-vote").style.display = "none";
     document.getElementById("screen-result").style.display = "none";
 
-    document.getElementById("info-role").innerText = myRole === "スパイ" ? "🕵️ スパイ" : "👥 一般人";
+    const isSpy = (myRole === "スパイ");
+    document.getElementById("info-role").innerText = isSpy ? "🕵️ スパイ" : "👥 一般人";
 
-    const locBox = document.getElementById("info-location-box");
-    if (myRole === "スパイ") {
-      locBox.style.display = "none";
+    const locationTextEl = document.getElementById("info-location");
+    if (isSpy) {
+      locationTextEl.innerText = "？？？（不明）";
+      locationTextEl.style.color = "var(--danger-color)";
       document.getElementById("spy-action-card").style.display = "block";
     } else {
-      locBox.style.display = "block";
-      document.getElementById("info-location").innerText = currentLocation;
+      locationTextEl.innerText = currentLocation || "不明";
+      locationTextEl.style.color = "var(--gold-main)";
       document.getElementById("spy-action-card").style.display = "none";
     }
 
