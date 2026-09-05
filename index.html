@@ -685,7 +685,8 @@
     votes = {};
 
     gameDuration = parseInt(document.getElementById("select-game-time").value, 10);
-    currentLocation = LOCATION_LIST[Math.floor(Math.random() * LOCATION_LIST.length)];
+    const selectedLocation = LOCATION_LIST[Math.floor(Math.random() * LOCATION_LIST.length)];
+    currentLocation = selectedLocation;
 
     let shuffled = shuffle([...players]);
     const spyId = shuffled[0].id;
@@ -698,12 +699,15 @@
       const payload = {
         type: 'GAME_START',
         role: role,
-        location: isSpy ? null : currentLocation,
+        location: isSpy ? null : selectedLocation,
         gameTime: gameDuration
       };
 
-      if (p.id === myId) handleClientData(payload);
-      else connections[p.id].send(payload);
+      if (p.id === myId) {
+        handleClientData(payload);
+      } else if (connections[p.id]) {
+        connections[p.id].send(payload);
+      }
     });
   }
 
@@ -782,7 +786,7 @@
       locationTextEl.style.color = "var(--danger-color)";
       document.getElementById("spy-action-card").style.display = "block";
     } else {
-      locationTextEl.innerText = currentLocation || "不明";
+      locationTextEl.innerText = currentLocation;
       locationTextEl.style.color = "var(--gold-main)";
       document.getElementById("spy-action-card").style.display = "none";
     }
